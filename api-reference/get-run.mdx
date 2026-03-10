@@ -1,0 +1,118 @@
+---
+title: Get Run
+description: Poll a workflow run for status and outputs
+api: GET /api/v1/runs/{id}
+---
+
+## Request
+
+```
+GET /api/v1/runs/{id}
+```
+
+### Headers
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer sk_live_...` |
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `string` | The run ID (UUID) returned by the [Run Workflow](/api-reference/run-workflow) endpoint. |
+
+---
+
+## Response
+
+### `200 OK`
+
+```json
+{
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "completed",
+  "outputs": {
+    "generated_image": {
+      "type": "image",
+      "data": "https://storage.space64.ai/media/image.png"
+    },
+    "analysis": {
+      "type": "text",
+      "data": "The image shows a modern urban landscape..."
+    }
+  },
+  "credits_used": 8,
+  "started_at": "2026-03-10T12:00:00.000Z",
+  "completed_at": "2026-03-10T12:00:12.000Z",
+  "error": null
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | UUID of the run. |
+| `status` | `string` | `"running"`, `"completed"`, or `"failed"`. |
+| `outputs` | `object` | Map of output slugs to their values. Empty while `status` is `"running"`. |
+| `credits_used` | `number` | Total credits consumed by this run. |
+| `started_at` | `string \| null` | ISO 8601 timestamp when the run started. |
+| `completed_at` | `string \| null` | ISO 8601 timestamp when the run finished. `null` while running. |
+| `error` | `string \| null` | Error message if `status` is `"failed"`. `null` otherwise. |
+
+### Output types
+
+Each output entry has a `type` and `data` field:
+
+| Type | `data` shape | Description |
+|------|-------------|-------------|
+| `text` | `string` | Generated text from an LLM node. |
+| `image` | `string` | URL of a single generated image. |
+| `images` | `string[]` | Array of URLs for multiple generated images. |
+| `video` | `string` | URL of a generated video. |
+
+### Error responses
+
+**`401 Unauthorized`**
+```json
+{ "error": "Invalid or missing API key" }
+```
+
+**`404 Not Found`**
+```json
+{ "error": "Run not found" }
+```
+
+**`429 Too Many Requests`**
+```json
+{ "error": "Rate limit exceeded" }
+```
+
+---
+
+## Polling pattern
+
+Poll this endpoint every **2–5 seconds** until `status` is `"completed"` or `"failed"`:
+
+```bash
+while true; do
+  RESULT=$(curl -s https://space64.ai/api/v1/runs/YOUR_RUN_ID \
+    -H "Authorization: Bearer sk_live_YOUR_KEY")
+
+  STATUS=$(echo "$RESULT" | jq -r '.status')
+  echo "Status: $STATUS"
+
+  if [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ]; then
+    echo "$RESULT" | jq .
+    break
+  fi
+
+  sleep 3
+done
+```
+
+## Example
+
+```bash
+curl https://space64.ai/api/v1/runs/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer sk_live_YOUR_KEY"
+```

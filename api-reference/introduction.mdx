@@ -1,33 +1,78 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: API Overview
+description: Authentication, rate limits, error codes, and credits
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
-
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://space64.ai
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API requests require a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer sk_live_...
+```
+
+API keys are created in the **Deploy panel** of the workflow editor. Each key is scoped to your account and works across all your deployed workflows.
+
+## Rate limits
+
+API requests are rate-limited to **30 requests per minute** per API key using a sliding window. If you exceed the limit, you'll receive a `429` response.
+
+## Error responses
+
+All errors return a JSON object with an `error` field:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "error": "Description of the error"
+}
 ```
+
+| Status | Meaning | Details |
+|--------|---------|---------|
+| `401` | Unauthorized | Invalid or missing API key. |
+| `402` | Payment Required | Insufficient credits. Response includes `balance` and `required` fields. |
+| `404` | Not Found | Workflow not found, not deployed, or run doesn't exist. |
+| `422` | Unprocessable Entity | Invalid JSON body or input validation failed. May include a `details` array. |
+| `429` | Too Many Requests | Rate limit exceeded (30 req/min). |
+| `500` | Internal Server Error | Unexpected error starting or processing the run. |
+
+### 402 example
+
+```json
+{
+  "error": "Insufficient credits",
+  "balance": 3,
+  "required": 10
+}
+```
+
+### 422 example (validation)
+
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    "Missing required input: \"prompt\"",
+    "Input \"reference\" must be a URL string or array of URL strings"
+  ]
+}
+```
+
+## Credits
+
+Each workflow run costs credits based on the nodes it executes:
+
+- **LLM nodes** — cost varies by model (e.g., Claude Sonnet ~2 cr, GPT-4o ~3 cr)
+- **Image generation** — cost varies by model and parameters (typically 3–15 cr)
+- **Video generation** — cost varies by duration and model (typically 10–50 cr)
+- **Input / Prompt nodes** — free (no generation cost)
+
+Credit costs are deducted when the run starts. If your balance is insufficient, the API returns a `402` error with your current balance and the required amount.
+
+Check your credit balance and upgrade your plan at [space64.ai](https://space64.ai).

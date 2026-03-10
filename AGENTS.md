@@ -1,33 +1,38 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# AGENTS.md
 
-# Documentation project instructions
+This repository contains the API documentation for [Space64](https://space64.ai), a visual workflow builder for AI image & video generation.
 
-## About this project
+## Tech stack
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Run `mint dev` to preview locally
-- Run `mint broken-links` to check links
+- **Mintlify** — docs framework (MDX pages, `docs.json` for config/navigation)
+- Content is authored in `.mdx` files at the repo root and in `api-reference/`
 
-## Terminology
+## File structure
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+```
+docs.json               — Mintlify config: branding, colors, navigation, navbar
+introduction.mdx        — Landing page
+quickstart.mdx          — Getting started guide
+api-reference/
+  introduction.mdx      — API overview (auth, rate limits, errors, credits)
+  run-workflow.mdx      — POST /api/v1/workflows/:id/run
+  get-run.mdx           — GET /api/v1/runs/:id
+logo/                   — Light/dark logo SVGs
+images/                 — Hero images
+favicon.svg             — Browser favicon
+```
 
-## Style preferences
+## Adding a new page
 
-{/* Add any project-specific style rules below */}
+1. Create a `.mdx` file with frontmatter (`title`, `description`)
+2. Add the file path (without extension) to the `navigation` section in `docs.json`
+3. Run `npx mint dev` to preview locally
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+## Source of truth
 
-## Content boundaries
-
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+API implementation lives in the main app repo (`/Users/wayne/Projects/comarketer`):
+- Auth: `src/lib/api-auth.ts`
+- Run endpoint: `src/app/api/v1/workflows/[id]/run/route.ts`
+- Poll endpoint: `src/app/api/v1/runs/[id]/route.ts`
+- Rate limiting: `src/lib/rate-limit.ts`
+- Credits: `src/lib/credits.ts`

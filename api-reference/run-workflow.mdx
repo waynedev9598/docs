@@ -1,0 +1,141 @@
+---
+title: Run Workflow
+description: Start a workflow run
+api: POST /api/v1/workflows/{id}/run
+---
+
+## Request
+
+```
+POST /api/v1/workflows/{id}/run
+```
+
+### Headers
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer sk_live_...` |
+| `Content-Type` | `application/json` |
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `string` | The workflow ID (UUID). Found in the Deploy panel or the URL of your workflow editor. |
+
+### Body
+
+```json
+{
+  "inputs": {
+    "slug": "value"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `inputs` | `object` | Key-value map of input slugs to their values. Slugs are the names set on Input nodes. |
+
+**Text inputs** accept a string value:
+
+```json
+{
+  "inputs": {
+    "prompt": "A futuristic cityscape at sunset",
+    "style": "photorealistic"
+  }
+}
+```
+
+**Image inputs** accept a URL string or an array of URL strings:
+
+```json
+{
+  "inputs": {
+    "reference": "https://example.com/photo.jpg"
+  }
+}
+```
+
+```json
+{
+  "inputs": {
+    "references": [
+      "https://example.com/photo1.jpg",
+      "https://example.com/photo2.jpg"
+    ]
+  }
+}
+```
+
+If `inputs` is omitted or empty, the workflow runs with no external inputs (useful for workflows with only fixed prompts).
+
+---
+
+## Response
+
+### `202 Accepted`
+
+```json
+{
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "running",
+  "poll_url": "/api/v1/runs/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | UUID of the created run. Use this to poll for results. |
+| `status` | `string` | Always `"running"` on success. |
+| `poll_url` | `string` | Relative URL to poll for run status and outputs. |
+
+### Error responses
+
+**`401 Unauthorized`**
+```json
+{ "error": "Invalid or missing API key" }
+```
+
+**`402 Payment Required`**
+```json
+{
+  "error": "Insufficient credits",
+  "balance": 3,
+  "required": 10
+}
+```
+
+**`404 Not Found`**
+```json
+{ "error": "Workflow not found or not deployed" }
+```
+
+**`422 Unprocessable Entity`**
+```json
+{
+  "error": "Validation failed",
+  "details": ["Missing required input: \"prompt\""]
+}
+```
+
+**`429 Too Many Requests`**
+```json
+{ "error": "Rate limit exceeded" }
+```
+
+---
+
+## Example
+
+```bash
+curl -X POST https://space64.ai/api/v1/workflows/abc123/run \
+  -H "Authorization: Bearer sk_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": {
+      "prompt": "A futuristic cityscape at sunset"
+    }
+  }'
+```
