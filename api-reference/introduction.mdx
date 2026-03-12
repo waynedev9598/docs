@@ -76,3 +76,91 @@ Each workflow run costs credits based on the nodes it executes:
 Credit costs are deducted when the run starts. If your balance is insufficient, the API returns a `402` error with your current balance and the required amount.
 
 Check your credit balance and upgrade your plan at [space64.ai](https://space64.ai).
+
+## Webhooks
+
+Instead of polling for run results, you can receive them via webhook. Pass a `webhook_url` when starting a run, and Space64 will POST the results to your URL when the run completes or fails.
+
+### How it works
+
+1. Pass `webhook_url` in your [Run Workflow](/api-reference/run-workflow) request.
+2. When the run completes or fails, Space64 sends a POST request to your URL with the run results.
+3. The payload matches the poll response format with an added `event` field.
+4. Webhooks are fire-and-forget with no retries. Use the [poll endpoint](/api-reference/get-run) as a fallback.
+
+### Webhook payload
+
+```json
+{
+  "event": "run.completed",
+  "run_id": "550e8400-...",
+  "workflow_id": "...",
+  "status": "completed",
+  "outputs": { ... },
+  "credits_used": 5,
+  "started_at": "2026-03-10T12:00:00.000Z",
+  "completed_at": "2026-03-10T12:00:12.000Z",
+  "error": null
+}
+```
+
+Events: `run.completed`, `run.failed`
+
+### Signing
+
+Every webhook request includes these headers for verification:
+
+| Header | Description |
+|--------|-------------|
+| `X-Space64-Webhook-Id` | Unique delivery ID (use for idempotency). |
+| `X-Space64-Webhook-Timestamp` | Unix timestamp in seconds. |
+| `X-Space64-Webhook-Signature` | Format: `v1,<hex>`. HMAC-SHA256 signature. |
+
+The signature is computed as:
+
+```
+HMAC-SHA256(webhook_secret, "${webhook_id}.${timestamp}.${body}")
+```
+
+Your webhook secret is generated per API key and viewable in the **Deploy panel**.
+
+### Verification example (Node.js)
+
+```javascript
+import crypto from "crypto";
+
+function verifyWebhook(body, headers, secret) {
+  const webhookId = headers["x-space64-webhook-id"];
+  const timestamp = headers["x-space64-webhook-timestamp"];
+  const signature = headers["x-space64-webhook-signature"];
+
+  // Check timestamp is within 5 minutes
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    throw new Error("Webhook timestamp too old");
+  }
+
+  const toSign = `${webhookId}.${timestamp}.${body}`;
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(toSign)
+    .digest("hex");
+
+  const [version, sig] = signature.split(",");
+  if (version !== "v1") throw new Error("Unknown signature version");
+
+  const valid = crypto.timingSafeEqual(
+    Buffer.from(expected, "hex"),
+    Buffer.from(sig, "hex")
+  );
+
+  if (!valid) throw new Error("Invalid signature");
+  return JSON.parse(body);
+}
+```
+
+### Constraints
+
+- **HTTPS only** — HTTP, localhost, and private IPs are rejected.
+- **5-second timeout** — your endpoint must respond within 5 seconds.
+- **No redirect following** — the URL must respond directly.
