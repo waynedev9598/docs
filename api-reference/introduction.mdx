@@ -17,7 +17,9 @@ All API requests require a Bearer token in the `Authorization` header:
 Authorization: Bearer sk_live_...
 ```
 
-API keys are created in the **Deploy panel** of the workflow editor. Each key is scoped to your account and works across all your deployed workflows.
+API keys are created in the **Deploy panel** of the workflow editor. Each key is scoped to your account and works across all your deployed workflows and template runs.
+
+**Note:** Template listing endpoints (`GET /api/v1/templates`) are public and do not require authentication.
 
 ## Rate limits
 

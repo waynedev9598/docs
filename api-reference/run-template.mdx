@@ -1,0 +1,150 @@
+---
+title: Run Template
+description: Run a published workflow template
+api: POST /api/v1/templates/{id}/run
+---
+
+## Request
+
+```
+POST /api/v1/templates/{id}/run
+```
+
+Run a published template directly. On the first call, a read-only workflow clone is automatically created for your account. Subsequent calls reuse the same clone.
+
+### Headers
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer sk_live_...` |
+| `Content-Type` | `application/json` |
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `string` | The template ID (UUID). Found in the template gallery or via the List Templates endpoint. |
+
+### Body
+
+```json
+{
+  "inputs": {
+    "slug": "value"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `inputs` | `object` | Key-value map of input slugs to their values. Use the `input_summary` from the Get Template endpoint to discover available inputs. |
+| `webhook_url` | `string` (optional) | HTTPS URL to receive run results when the workflow completes or fails. Must be publicly accessible. |
+
+**Text inputs** accept a string value:
+
+```json
+{
+  "inputs": {
+    "prompt": "A futuristic cityscape at sunset",
+    "style": "photorealistic"
+  }
+}
+```
+
+**Image inputs** accept a URL string or array of URL strings:
+
+```json
+{
+  "inputs": {
+    "reference": "https://example.com/photo.jpg"
+  }
+}
+```
+
+```json
+{
+  "inputs": {
+    "references": [
+      "https://example.com/photo1.jpg",
+      "https://example.com/photo2.jpg"
+    ]
+  }
+}
+```
+
+---
+
+## Response
+
+### `202 Accepted`
+
+```json
+{
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "running",
+  "poll_url": "/api/v1/runs/550e8400-e29b-41d4-a716-446655440000",
+  "template_id": "660e8400-e29b-41d4-a716-446655440000",
+  "workflow_id": "770e8400-e29b-41d4-a716-446655440000",
+  "estimated_duration_seconds": 48,
+  "estimated_completion_at": "2026-03-10T12:00:48.000Z"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | UUID of the created run. Use this to poll for results via [Get Run](/api-reference/get-run). |
+| `status` | `string` | Always `"running"` on success. |
+| `poll_url` | `string` | Relative URL to poll for run status and outputs. |
+| `template_id` | `string` | The template that was run. |
+| `workflow_id` | `string` | The auto-created workflow clone. You can also run this directly via [Run Workflow](/api-reference/run-workflow) after deploying it. |
+| `estimated_duration_seconds` | `number` | Estimated wall-clock time for the run to complete. |
+| `estimated_completion_at` | `string` | ISO 8601 timestamp of estimated completion. |
+
+### Error responses
+
+**`401 Unauthorized`**
+```json
+{ "error": "Invalid or missing API key" }
+```
+
+**`402 Payment Required`**
+```json
+{
+  "error": "Insufficient credits",
+  "balance": 3,
+  "required": 10
+}
+```
+
+**`404 Not Found`**
+```json
+{ "error": "Template not found" }
+```
+
+**`422 Unprocessable Entity`**
+```json
+{
+  "error": "Validation failed",
+  "details": ["Missing required input: \"prompt\""]
+}
+```
+
+**`429 Too Many Requests`**
+```json
+{ "error": "Rate limit exceeded" }
+```
+
+---
+
+## Example
+
+```bash
+curl -X POST https://space64.ai/api/v1/templates/660e8400-e29b-41d4-a716-446655440000/run \
+  -H "Authorization: Bearer sk_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": {
+      "prompt": "A futuristic cityscape at sunset"
+    }
+  }'
+```

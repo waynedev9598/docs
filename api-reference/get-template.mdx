@@ -1,0 +1,71 @@
+---
+title: Get Template
+description: Get details of a published workflow template
+api: GET /api/v1/templates/{id}
+---
+
+## Request
+
+```
+GET /api/v1/templates/{id}
+```
+
+This endpoint is **public** — no API key required.
+
+### Path parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `string` | The template ID (UUID). Found in the template gallery or via the List Templates endpoint. |
+
+---
+
+## Response
+
+### `200 OK`
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Fashion Outfit Generator",
+  "description": "Upload outfit photos and generate matching styles",
+  "category": "fashion",
+  "input_summary": [
+    { "name": "outfit_photo", "type": "images" },
+    { "name": "style", "type": "text" }
+  ],
+  "output_summary": [
+    { "slug": "result", "dataType": "image", "nodeLabel": "Generate" }
+  ],
+  "clone_count": 42,
+  "published_at": "2026-03-15T12:00:00.000Z",
+  "created_at": "2026-03-14T10:00:00.000Z"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Template UUID. |
+| `title` | `string` | Template name. |
+| `description` | `string` | Template description. |
+| `category` | `string` | Category tag. |
+| `input_summary` | `array` | List of inputs the template accepts. Each has `name` (the slug to use in API calls) and `type` (`text` or `images`). |
+| `output_summary` | `array` | List of outputs the template produces. Each has `slug`, `dataType` (`text`, `image`, `images`, `video`), and `nodeLabel`. |
+| `clone_count` | `number` | How many times this template has been used. |
+| `published_at` | `string` | ISO 8601 publish date. |
+| `created_at` | `string` | ISO 8601 creation date. |
+
+### Error responses
+
+**`404 Not Found`**
+```json
+{ "error": "Template not found" }
+```
+
+---
+
+## Example
+
+```bash
+curl https://space64.ai/api/v1/templates/550e8400-e29b-41d4-a716-446655440000
+```
