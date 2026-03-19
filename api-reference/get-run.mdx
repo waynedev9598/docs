@@ -45,6 +45,9 @@ GET /api/v1/runs/{id}
   "credits_used": 8,
   "started_at": "2026-03-10T12:00:00.000Z",
   "completed_at": "2026-03-10T12:00:12.000Z",
+  "estimated_duration_seconds": 12,
+  "estimated_remaining_seconds": null,
+  "estimated_completion_at": "2026-03-10T12:00:12.000Z",
   "error": null,
   "webhook": {
     "url": "https://your-server.com/webhooks/space64",
@@ -61,6 +64,9 @@ GET /api/v1/runs/{id}
 | `credits_used` | `number` | Total credits consumed by this run. |
 | `started_at` | `string \| null` | ISO 8601 timestamp when the run started. |
 | `completed_at` | `string \| null` | ISO 8601 timestamp when the run finished. `null` while running. |
+| `estimated_duration_seconds` | `number \| null` | Estimated total run time in seconds. |
+| `estimated_remaining_seconds` | `number \| null` | Estimated seconds until completion. `null` when the run is completed, failed, or when the estimate has been exceeded. |
+| `estimated_completion_at` | `string \| null` | ISO 8601 estimated completion time. |
 | `error` | `string \| null` | Error message if `status` is `"failed"`. `null` otherwise. |
 | `webhook` | `object \| undefined` | Webhook delivery info. Only present when a `webhook_url` was specified in the run request. Contains `url` (string) and `sent_at` (ISO 8601 timestamp, `null` if not yet sent). |
 
@@ -96,9 +102,14 @@ Each output entry has a `type` and `data` field:
 
 ## Polling pattern
 
-Poll this endpoint every **2–5 seconds** until `status` is `"completed"` or `"failed"`:
+Use `estimated_duration_seconds` from the [Run Workflow](/api-reference/run-workflow) response to set your initial polling delay. A good strategy: wait ~80% of the estimated duration before your first poll, then poll every 2–5 seconds until `status` is `"completed"` or `"failed"`.
+
+You can also use `estimated_remaining_seconds` from this endpoint to adjust polling frequency dynamically.
 
 ```bash
+# Initial delay based on ETA (e.g., estimated_duration_seconds was 48)
+sleep 38
+
 while true; do
   RESULT=$(curl -s https://space64.ai/api/v1/runs/YOUR_RUN_ID \
     -H "Authorization: Bearer sk_live_YOUR_KEY")

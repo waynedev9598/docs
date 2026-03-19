@@ -84,7 +84,9 @@ If `inputs` is omitted or empty, the workflow runs with no external inputs (usef
 {
   "run_id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "running",
-  "poll_url": "/api/v1/runs/550e8400-e29b-41d4-a716-446655440000"
+  "poll_url": "/api/v1/runs/550e8400-e29b-41d4-a716-446655440000",
+  "estimated_duration_seconds": 48,
+  "estimated_completion_at": "2026-03-10T12:00:48.000Z"
 }
 ```
 
@@ -93,6 +95,8 @@ If `inputs` is omitted or empty, the workflow runs with no external inputs (usef
 | `run_id` | `string` | UUID of the created run. Use this to poll for results. |
 | `status` | `string` | Always `"running"` on success. |
 | `poll_url` | `string` | Relative URL to poll for run status and outputs. |
+| `estimated_duration_seconds` | `number` | Estimated wall-clock time for the run to complete, in seconds. Based on model timing estimates and workflow DAG critical-path analysis. |
+| `estimated_completion_at` | `string` | ISO 8601 timestamp of estimated completion. |
 
 ### Error responses
 
