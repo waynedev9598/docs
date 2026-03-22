@@ -27,16 +27,10 @@
             "pages": ["api-reference/introduction"]
           },
           {
-            "group": "Templates",
-            "pages": [
-              "api-reference/list-templates",
-              "api-reference/get-template",
-              "api-reference/run-template"
-            ]
-          },
-          {
             "group": "Workflows",
             "pages": [
+              "api-reference/list-workflows",
+              "api-reference/get-workflow",
               "api-reference/run-workflow",
               "api-reference/get-run"
             ]
